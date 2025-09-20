@@ -4,8 +4,11 @@
 set -o errexit
 
 echo "Running database initializations..."
-python init_database.py
-echo "Database initialization complete."
+# Apply database migrations
+flask db upgrade
+
+# Seed the database with sample data (optional, safe to run multiple times)
+python seed.py
 
 echo "Starting Gunicorn server..."
-gunicorn --worker-class eventlet -w 1 --bind 0.0.0.0:$PORT app:socketio
+gunicorn --worker-class eventlet -w 1 --bind 0.0.0.0:$PORT --access-logfile - --error-logfile - --log-level info app:socketio

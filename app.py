@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from flask_socketio import SocketIO, join_room
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 from flask_caching import Cache
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
@@ -46,37 +47,11 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-# --- Database Initialization (using SQLAlchemy's engine) ---
+# Import models after db is defined to avoid circular imports
+from models import User, Auction, Bid, Order, Notification
+
+migrate = Migrate(app, db)
 from sqlalchemy import text
-
-# --- Database Initialization ---
-def init_db():
-    with app.app_context():
-        # Using db.engine.connect() ensures we use the pooled and managed connections
-        with db.engine.connect() as conn:
-            with conn.begin(): # Use a transaction block for creating tables and indexes
-                conn.execute(text('''CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, name VARCHAR(255), email VARCHAR(255) UNIQUE, password TEXT, created_at TIMESTAMP, email_verified BOOLEAN DEFAULT false, is_admin BOOLEAN DEFAULT false)'''))
-                conn.execute(text('''CREATE TABLE IF NOT EXISTS auctions (id SERIAL PRIMARY KEY, title VARCHAR(255), description TEXT, starting_price DECIMAL(10, 2), current_price DECIMAL(10, 2), end_time TIMESTAMP, seller_id INT, category VARCHAR(255), image_url TEXT, created_at TIMESTAMP, history_link TEXT)'''))
-                conn.execute(text('''CREATE TABLE IF NOT EXISTS bids (id SERIAL PRIMARY KEY, auction_id INT, user_id INT, amount DECIMAL(10, 2), bid_time TIMESTAMP)'''))
-                conn.execute(text('''CREATE TABLE IF NOT EXISTS orders (id SERIAL PRIMARY KEY, auction_id INT, user_id INT, address TEXT, payment_status VARCHAR(50), order_status VARCHAR(50) DEFAULT 'Ordered', created_at TIMESTAMP)'''))
-                conn.execute(text('''CREATE TABLE IF NOT EXISTS notifications (id SERIAL PRIMARY KEY, user_id INT, message TEXT, is_read BOOLEAN DEFAULT false, created_at TIMESTAMP, link TEXT, FOREIGN KEY(user_id) REFERENCES users(id))'''))
-
-                # --- Add Indexes for Performance ---
-                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_auctions_seller_id ON auctions (seller_id)"))
-                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_auctions_end_time ON auctions (end_time)"))
-                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_auctions_category ON auctions (category)"))
-                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_bids_auction_id ON bids (auction_id)"))
-                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_bids_user_id ON bids (user_id)"))
-                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders (user_id)"))
-
-            # The ALTER TABLE statement is a migration step for older databases.
-            # Running it in a separate transaction is safer.
-            with conn.begin():
-                try:
-                    conn.execute(text("ALTER TABLE users ADD COLUMN is_admin BOOLEAN DEFAULT false"))
-                except Exception as e:
-                    if 'column "is_admin" of relation "users" already exists' not in str(e):
-                        raise
 
 # --- Notification Helper ---
 def create_notification(user_id, message, link):
@@ -468,33 +443,6 @@ def place_bid():
         db.session.rollback()
         return jsonify({'success': False, 'message': 'An error occurred while placing the bid.'})
 
-def create_sample_data():
-    """Create sample auction data if database is empty"""
-    with app.app_context():
-        # Check if auctions exist
-        count_result = db.session.execute(text('SELECT COUNT(*) FROM auctions'))
-        if count_result.scalar() == 0:
-            # Create a default user for sample auctions
-            db.session.execute(text('INSERT INTO users (id, name, email, password, created_at) VALUES (1, \'Demo Seller\', \'demo@example.com\', \'demo\', :now) ON CONFLICT (email) DO NOTHING'), {'now': datetime.now()})
-
-            sample_auctions = [
-                ("Vintage Rolex Watch", "Authentic vintage Rolex Submariner from 1978. In excellent condition.", 2000, 2500,
-                 (datetime.now() + timedelta(days=2)), 1, "Watches", "⌚", datetime.now(), "https://en.wikipedia.org/wiki/Rolex_Submariner"),
-                ("Rare Pokemon Cards Set", "Complete first edition Pokemon card collection", 300, 450,
-                 (datetime.now() + timedelta(days=1)), 1, "Collectibles", "🎮", datetime.now(), None),
-                ("Antique Painting", "18th century oil painting by renowned artist", 1000, 1200,
-                 (datetime.now() + timedelta(days=5)), 1, "Art", "🎨", datetime.now(), None),
-            ]
-
-            for auction in sample_auctions:
-                db.session.execute(text('''INSERT INTO auctions (title, description, starting_price, current_price,
-                            end_time, seller_id, category, image_url, created_at, history_link)
-                            VALUES (:title, :desc, :start_p, :curr_p, :end_t, :seller, :cat, :img, :created, :hist)'''),
-                            {'title': auction[0], 'desc': auction[1], 'start_p': auction[2], 'curr_p': auction[3], 'end_t': auction[4], 'seller': auction[5], 'cat': auction[6], 'img': auction[7], 'created': auction[8], 'hist': auction[9]})
-
-        db.session.commit()
-
-
 # Route for creating a new auction
 @app.route('/create-auction', methods=['GET', 'POST'])
 def create_auction():
@@ -822,6 +770,6 @@ if __name__ == '__main__':
     # For production, a Gunicorn server is used as defined in render.yaml.
     print("🚀 Starting AuctionHub development server...")
     print("✅ Make sure your PostgreSQL server is running and configured in .env")
-    print("➡️  Run `python init_database.py` to set up the database if you haven't already.")
+    print("➡️  Run `flask db upgrade` to set up/update the database if you haven't already.")
     print("➡️  Open your browser and go to: http://localhost:5000")
     socketio.run(app, host='0.0.0.0', port=5000, debug=True)
