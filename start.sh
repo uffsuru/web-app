@@ -8,4 +8,4 @@ python init_database.py
 echo "Database initialization complete."
 
 echo "Starting Gunicorn server..."
-gunicorn --worker-class eventlet -w 1 app:socketio
+gunicorn --worker-class eventlet -w 1 --bind 0.0.0.0:$PORT app:socketio
