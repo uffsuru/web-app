@@ -23,7 +23,12 @@ app.secret_key = os.getenv('SECRET_KEY', 'a-default-dev-secret-key-that-is-not-s
 socketio = SocketIO(app)
 
 # --- Caching Configuration ---
-cache = Cache(app, config={'CACHE_TYPE': 'simple'})
+cache = Cache(app, config={
+    "CACHE_TYPE": "FileSystemCache",
+    "CACHE_DIR": "/tmp",
+    "CACHE_DEFAULT_TIMEOUT": 300
+})
+
 
 # --- SQLAlchemy Configuration for PostgreSQL ---
 database_url = os.getenv('DATABASE_URL')
