@@ -336,22 +336,42 @@ def register():
         return jsonify({'success': False, 'message': 'All fields required'})
 
     try:
-        # Check if user exists
-        user_result = db.session.execute(text('SELECT id FROM users WHERE email = :email'), {'email': email})
+        # Check if user already exists
+        user_result = db.session.execute(
+            text('SELECT id FROM users WHERE email = :email'),
+            {'email': email}
+        )
         if user_result.mappings().first():
             return jsonify({'success': False, 'message': 'Email already registered'})
 
-        # Create user (email_verified=0 by default)
+        # Hash password
         hashed_password = generate_password_hash(password)
-        db.session.execute(text('INSERT INTO users (name, email, password, created_at, email_verified) VALUES (:name, :email, :password, :created_at, false)'),
-                          {'name': name, 'email': email, 'password': hashed_password, 'created_at': datetime.now()})
+
+        # Insert user with email_verified = False
+        db.session.execute(
+            text('''
+                INSERT INTO users (name, email, password, created_at, email_verified)
+                VALUES (:name, :email, :password, :created_at, :email_verified)
+            '''),
+            {
+                'name': name,
+                'email': email,
+                'password': hashed_password,
+                'created_at': datetime.now(),
+                'email_verified': False   # 👈 boolean, not integer
+            }
+        )
         db.session.commit()
-    except Exception as e:
-        db.session.rollback()
+        return jsonify({'success': True, 'message': 'Registration successful'})
+
+    except SQLAlchemyError as e:
+        db.session.rollback()   # 👈 rollback fix
         print(f"Error in register route: {e}")
         return jsonify({'success': False, 'message': 'Database error during registration.'})
 
-    return jsonify({'success': True, 'message': 'Registration successful'})
+    finally:
+        db.session.close()  # 👈 cleanup session (good practice)
+
 
 @app.route('/api/login', methods=['POST'])
 def login():
