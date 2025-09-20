@@ -452,15 +452,6 @@ def place_bid():
         if highest_bidder and highest_bidder['user_id'] != session['user_id']:
             create_notification(highest_bidder['user_id'], f"You have been outbid on {auction['title']}.", f"/auction/{auction_id}")
 
-        # Real-time update: broadcast the new bid to all clients in the auction room
-        bid_data = {
-            'auction_id': auction_id,
-            'new_price': float(bid_amount),
-            'bidder_name': session.get('user_name', 'Anonymous'),
-            'bid_time': datetime.now().isoformat()
-        }
-        socketio.emit('bid_update', bid_data, room=f"auction_{auction_id}")
-
         return jsonify({'success': True, 'message': 'Bid placed successfully'})
 
     except Exception as e:
