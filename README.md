@@ -72,10 +72,40 @@ Copy the example environment file (`.env.example`) to a new file named `.env` an
 
 ### 6. Initialize the Database
 
-Run the initialization script to create all the necessary tables and indexes in your database.
+This project uses Flask-Migrate to manage database schema changes.
+
+**a. Set the FLASK_APP environment variable:**
+
+The Flask command-line tool needs to know where your application is. Before running `flask` commands, set the environment variable in your terminal.
+
+- **On Windows (Command Prompt):**
+  ```bash
+  set FLASK_APP=app.py
+  ```
+
+- **On Windows (PowerShell):**
+  ```bash
+  $env:FLASK_APP = "app.py"
+  ```
+
+- **On macOS/Linux:**
+  ```bash
+  export FLASK_APP=app.py
+  ```
+
+**b. Create the initial database schema:**
+
+If this is your first time setting up the project, you need to initialize the migrations directory and apply the first migration.
 
 ```bash
-python init_database.py
+# Run this only once for a new project setup
+flask db init
+
+# Generate the initial migration script (based on models.py)
+flask db migrate -m "Initial migration."
+
+# Apply the migration to create the tables in your database
+flask db upgrade
 ```
 
 ### 7. Run the Application

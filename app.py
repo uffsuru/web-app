@@ -443,51 +443,6 @@ def place_bid():
         db.session.rollback()
         return jsonify({'success': False, 'message': 'An error occurred while placing the bid.'})
 
-# Route for creating a new auction
-@app.route('/create-auction', methods=['GET', 'POST'])
-def create_auction():
-    if 'user_id' not in session:
-        return redirect(url_for('index'))
-    if request.method == 'POST':
-        title = request.form.get('title')
-        description = request.form.get('description')
-        starting_price = request.form.get('starting_price')
-        end_time = request.form.get('end_time')
-        category = request.form.get('category')
-        history_link = request.form.get('history_link')
-        file = request.files.get('image_file')
-        allowed_exts = {'jpg', 'jpeg', 'png', 'gif', 'pdf', 'webp', 'bmp', 'tiff', 'svg'}
-        # Add a file size limit (e.g., 5MB)
-        if file and len(file.read()) > 5 * 1024 * 1024:
-            return render_template('create-auction.html', error='File is too large. The limit is 5MB.')
-        file.seek(0) # Reset file pointer after reading
-
-        image_url = ''
-        if not all([title, description, starting_price, end_time, category]):
-            return render_template('create-auction.html', error='All fields except image are required.')
-        if file and file.filename:
-            ext = file.filename.rsplit('.', 1)[-1].lower()
-            if ext in allowed_exts:
-                upload_folder = os.path.join(app.root_path, 'static', 'uploads')
-                os.makedirs(upload_folder, exist_ok=True)
-                filename = secure_filename(f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{file.filename}")
-                file_path = os.path.join(upload_folder, filename)
-                file.save(file_path)
-                # Store a relative path for use with url_for('static', ...)
-                image_url = os.path.join('uploads', filename).replace('\\', '/')
-            else:
-                return render_template('create-auction.html', error='Invalid file type. Allowed: jpg, png, gif, pdf,')
-        try:
-            db.session.execute(text('''INSERT INTO auctions (title, description, starting_price, current_price, end_time, seller_id, category, image_url, created_at, history_link)
-                                      VALUES (:title, :desc, :price, :price, :end_time, :seller_id, :cat, :img, :now, :hist)'''),
-                                      {'title': title, 'desc': description, 'price': float(starting_price), 'end_time': end_time, 'seller_id': session['user_id'], 'cat': category, 'img': image_url, 'now': datetime.now(), 'hist': history_link})
-            db.session.commit()
-            return redirect(url_for('dashboard'))
-        except Exception as e:
-            db.session.rollback()
-            return render_template('create-auction.html', error='Error creating auction: ' + str(e))
-    return render_template('create-auction.html')
-
 @app.route('/auction/<int:auction_id>/edit', methods=['GET', 'POST'])
 def edit_auction(auction_id):
     if 'user_id' not in session:
@@ -770,6 +725,6 @@ if __name__ == '__main__':
     # For production, a Gunicorn server is used as defined in render.yaml.
     print("🚀 Starting AuctionHub development server...")
     print("✅ Make sure your PostgreSQL server is running and configured in .env")
-    print("➡️  Run `flask db upgrade` to set up/update the database if you haven't already.")
+    print("➡️  Run `flask db upgrade` to set up/update the database.")
     print("➡️  Open your browser and go to: http://localhost:5000")
     socketio.run(app, host='0.0.0.0', port=5000, debug=True)
