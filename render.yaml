@@ -11,7 +11,7 @@ services:
     env: python
     plan: free # Or your preferred plan
     buildCommand: "./build.sh"
-    startCommand: "gunicorn --worker-class eventlet -w 1 app:socketio"
+    startCommand: "./start.sh"
     envVars:
       - key: PYTHON_VERSION
         value: 3.10.12 # Or your desired Python version
