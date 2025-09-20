@@ -4,3 +4,5 @@ Flask-SQLAlchemy
 Flask-Caching
 psycopg2-binary
 python-dotenv
+gunicorn
+eventlet

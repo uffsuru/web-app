@@ -13,28 +13,31 @@ from dotenv import load_dotenv
 
 app = Flask(__name__)
 load_dotenv() # Load environment variables from .env file
-app.secret_key = 'your-secret-key-here'
+app.secret_key = os.getenv('SECRET_KEY', 'a-default-dev-secret-key-that-is-not-secure')
 
-# On PythonAnywhere, the standard WSGI setup doesn't support eventlet/gevent async modes.
-# The `OSError: write error` occurs because of this incompatibility.
-# Setting async_mode='threading' makes Flask-SocketIO use a model compatible with PythonAnywhere's environment, relying on long-polling instead of WebSockets.
-socketio = SocketIO(async_mode='threading')
-socketio.init_app(app)
+# For production servers like Render using eventlet, we don't need to force 'threading'.
+# For platforms like PythonAnywhere, async_mode='threading' is required.
+# Let SocketIO auto-detect the best async mode.
+socketio = SocketIO(app)
 
 # --- Caching Configuration ---
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 
 # --- SQLAlchemy Configuration for PostgreSQL ---
-# Credentials are loaded from environment variables for security.
-# See .env.example for details.
-DB_USER = os.getenv('DB_USER', 'postgres')
-DB_PASSWORD = os.getenv('DB_PASSWORD', 'password')
-DB_HOST = os.getenv('DB_HOST', 'localhost')
-DB_NAME = os.getenv('DB_NAME', 'auction')
+database_url = os.getenv('DATABASE_URL')
+if database_url and database_url.startswith("postgres://"):
+    # Render's DATABASE_URL is in the format postgres://... but SQLAlchemy needs postgresql://...
+    database_url = database_url.replace("postgres://", "postgresql://", 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+else:
+    # Fallback to local .env configuration for development
+    DB_USER = os.getenv('DB_USER', 'postgres')
+    DB_PASSWORD = os.getenv('DB_PASSWORD', 'password')
+    DB_HOST = os.getenv('DB_HOST', 'localhost')
+    DB_NAME = os.getenv('DB_NAME', 'auction')
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}'
 
-app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}'
-
-# Recommended settings for PythonAnywhere
+# These settings are good for production environments to prevent stale connections.
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'pool_recycle': 299,  # Recycles connections after 299 seconds, preventing "MySQL has gone away" errors.
     'pool_pre_ping': True # Checks connection health before use.
@@ -93,12 +96,8 @@ def create_notification(user_id, message, link):
 @socketio.on('connect')
 def handle_connect():
     if 'user_id' in session:
+        # Join a room for user-specific notifications
         join_room(str(session['user_id']))
-
-@socketio.on('join')
-def handle_join(data):
-    if 'user_id' in session and str(session['user_id']) == data['room']:
-        join_room(data['room'])
 
 # --- Add get_time_left helper and register as Jinja2 global ---
 def get_time_left(end_time_str):
@@ -455,6 +454,15 @@ def place_bid():
         if highest_bidder and highest_bidder['user_id'] != session['user_id']:
             create_notification(highest_bidder['user_id'], f"You have been outbid on {auction['title']}.", f"/auction/{auction_id}")
 
+        # Real-time update: broadcast the new bid to all clients in the auction room
+        bid_data = {
+            'auction_id': auction_id,
+            'new_price': float(bid_amount),
+            'bidder_name': session.get('user_name', 'Anonymous'),
+            'bid_time': datetime.now().isoformat()
+        }
+        socketio.emit('bid_update', bid_data, room=f"auction_{auction_id}")
+
         return jsonify({'success': True, 'message': 'Bid placed successfully'})
 
     except Exception as e:
@@ -802,14 +810,20 @@ def notifications_summary():
 
     return jsonify({'success': True, 'unread_count': unread_count, 'notifications': notifications})
 
+@socketio.on('join_auction')
+def handle_join_auction(data):
+    """Client joins a room for a specific auction to receive real-time bid updates."""
+    auction_id = data.get('auction_id')
+    if auction_id:
+        room = f"auction_{auction_id}"
+        join_room(room)
+
 
 if __name__ == '__main__':
-    init_db()
-    create_sample_data()
-    print("🚀 AuctionHub server starting with MySQL...")
-    print("✅ Make sure your MySQL server is running and configured in app.py")
-    print("➡️ Open your browser and go to: http://localhost:5000")
-    # The socketio.run() command starts a development server.
-    # For local development, it's recommended to install eventlet (`pip install eventlet`)
-    # for full WebSocket support, but it will fall back to long-polling without it.
+    # This block is for local development only.
+    # For production, a Gunicorn server is used as defined in render.yaml.
+    print("🚀 Starting AuctionHub development server...")
+    print("✅ Make sure your PostgreSQL server is running and configured in .env")
+    print("➡️  Run `python init_database.py` to set up the database if you haven't already.")
+    print("➡️  Open your browser and go to: http://localhost:5000")
     socketio.run(app, host='0.0.0.0', port=5000, debug=True)
