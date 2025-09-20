@@ -12,6 +12,7 @@ import os
 from dotenv import load_dotenv
 
 app = Flask(__name__)
+app.run()
 load_dotenv() # Load environment variables from .env file
 app.secret_key = os.getenv('SECRET_KEY', 'a-default-dev-secret-key-that-is-not-secure')
 
