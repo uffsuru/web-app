@@ -1,0 +1,28 @@
+{% for bid in my_bids %}
+<div class="bid-item" style="cursor: pointer;" onclick="window.location.href='{{ url_for('auction_detail', auction_id=bid.id) }}'">
+    <div>
+        <h3>{{ bid.title }}</h3>
+        <p><strong>Your Bid:</strong> ₹{{ "%.2f"|format(bid.amount) }} | <strong>Current Bid:</strong> ₹{{ "%.2f"|format(bid.current_price) }}</p>
+        <p><strong>Ends:</strong> {{ get_time_left(bid.end_time) }}</p>
+    </div>
+    <div class="bid-status">
+        {% if get_time_left(bid.end_time) == 'Ended' %}
+            {% if bid.amount == bid.current_price %}
+                {% if bid.is_ordered %}
+                    <span class="btn btn-sm" style="background:#ccc; color:#fff; cursor:default;">Ordered</span>
+                {% else %}
+                    <a href="{{ url_for('order', auction_id=bid.id) }}" class="btn btn-sm btn-success" onclick="event.stopPropagation();">Pay Now</a>
+                {% endif %}
+            {% else %}
+                <span class="btn btn-sm" style="background:#e74c3c; color:#fff; cursor:default;">Outbid</span>
+            {% endif %}
+        {% else %}
+            {% if bid.amount == bid.current_price %}
+                <span class="btn btn-sm" style="background:#28a745; color:#fff; cursor:default;">Winning</span>
+            {% else %}
+                <span class="btn btn-sm" style="background:#f39c12; color:#fff; cursor:default;">Losing</span>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+{% endfor %}

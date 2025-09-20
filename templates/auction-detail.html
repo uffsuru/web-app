@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}{{ auction.title }} - AuctionHub{% endblock %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auction-detail.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="auction-detail-section">
+    <div class="container">
+        {% if auction %}
+        <div class="auction-detail-grid">
+            <div class="auction-image-large">
+                <div class="image-placeholder">
+                    {% if auction.image_url and 'uploads' in auction.image_url %}
+                        <img src="{{ url_for('static', filename=auction.image_url) }}" alt="{{ auction.title }}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 20px;">
+                    {% elif auction.image_url %}
+                        {# This handles the emoji from sample data #}
+                        {{ auction.image_url }}
+                    {% else %}
+                        🏷️
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="auction-info-detailed">
+                <h1>{{ auction.title }}</h1>
+                <p class="auction-description">{{ auction.description }}</p>
+                
+                <div class="alert alert-success" id="successAlert"></div>
+                <div class="alert alert-error" id="errorAlert"></div>
+                
+                <div class="price-info">
+                    <div class="current-price">
+                        <span class="label">Current Bid:</span>
+                        <span class="price" id="currentPrice">₹{{ "%.2f"|format(auction.current_price) }}</span>
+                    </div>
+                    <div class="starting-price">
+                        <span class="label">Starting Price:</span>
+                        <span class="price">₹{{ "%.2f"|format(auction.starting_price) }}</span>
+                    </div>
+                </div>
+                
+                <div class="time-info">
+                    <div class="time-left" id="timeLeft">{{ get_time_left(auction.end_time) }}</div>
+                </div>
+                
+                {% if session.user_id and session.user_id != auction.seller_id %}
+                <div class="bid-section">
+                    <form id="bidForm" data-auction-id="{{ auction.id }}">
+                        <div class="bid-input-group">
+                            <input type="number" id="bidAmount" placeholder="Enter bid amount" min="{{ auction.current_price + 1 }}" step="0.01" required>
+                            <button type="submit" class="btn btn-primary">Place Bid</button>
+                        </div>
+                    </form>
+                </div>
+                {% elif session.user_id and session.user_id == auction.seller_id %}
+                <div class="login-prompt" style="background: #e9ecef; color: #495057;">
+                    <p>This is your auction. You cannot place a bid.</p>
+                </div>
+                {% else %}
+                <div class="login-prompt">
+                    <p>Please <a href="#" id="loginPrompt">login</a> to place a bid</p>
+                </div>
+                {% endif %}
+                
+                <div class="auction-details">
+                    <h3>Auction Details</h3>
+                    <ul>
+                        <li><strong>Category:</strong> {{ auction.category if auction.category else 'General' }}</li>
+                        {% if auction.history_link %}
+                        <li><strong>Item History:</strong> <a href="{{ auction.history_link }}" target="_blank" rel="noopener noreferrer">View Article</a></li>
+                        {% endif %}
+                        <li><strong>Seller:</strong> Verified Seller</li>
+                        <li><strong>Condition:</strong> Excellent</li>
+                        <li><strong>Shipping:</strong> Worldwide</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bid-history">
+            <h3>Bid History</h3>
+            <div class="bid-list" id="bidList">
+                {% if bids %}
+                    {% for bid in bids %}
+                    <div class="bid-item">
+                        <span class="bidder">{{ bid.name }}</span>
+                        <span class="bid-amount">₹{{ "%.2f"|format(bid.amount) }}</span>
+                        <span class="bid-time">{{ bid.bid_time }}</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="text-align: center; padding: 2rem; color: #666;">
+                        <p>No bids yet. Be the first to bid!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 4rem;">
+            <h1>Auction Not Found</h1>
+            <p>The auction you're looking for doesn't exist.</p>
+            <a href="/" class="btn btn-primary">Go Back Home</a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<script src="{{ url_for('static', filename='js/auction-details.js') }}"></script>
+{% endblock %}

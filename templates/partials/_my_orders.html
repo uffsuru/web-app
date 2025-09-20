@@ -1,0 +1,55 @@
+{% for order in my_orders %}
+    <div class="order-card {% if order.order_status == 'Cancelled' %}order-card-cancelled{% endif %}" id="order-{{ order.id }}">
+        <div class="order-card-header">
+            <span><strong>Order ID:</strong> #{{ order.id }}</span>
+            <span><strong>Ordered on:</strong> {{ order.created_at.strftime('%Y-%m-%d') if order.created_at else 'N/A' }}</span>
+        </div>
+        <div class="order-card-body">
+            <div class="order-item-image">
+                {% if order.image_url and 'uploads' in order.image_url %}
+                    <img src="{{ url_for('static', filename=order.image_url) }}" alt="{{ order.title }}">
+                     {% elif order.image_url %}
+                {% else %}
+                    <div class="image-placeholder-small">🏷️</div>
+                {% endif %}
+            </div>
+            <div class="order-item-details">
+                <h4><a href="{{ url_for('auction_detail', auction_id=order.auction_id) }}">{{ order.title }}</a></h4>
+                {% if order.order_status == 'Cancelled' %}
+                    <p style="color: #e74c3c; font-weight: bold;">Order Cancelled</p>
+                {% else %}
+                    <p>Shipping to: {{ order.address }}</p>
+                    <p style="color: #28a745; font-weight: 600; margin-top: 0.5rem;">
+                        <span style="font-size: 1.1em;">🚚</span> Expected Delivery: {{ get_delivery_date(order.created_at) if order.created_at else 'N/A' }}
+                    </p>
+                {% endif %}
+            </div>
+            <div class="order-item-actions">
+                <button class="btn btn-secondary help-btn" data-order-id="{{ order.id }}">Need Help?</button>
+            </div>
+        </div>
+        {% if order.order_status != 'Cancelled' %}
+        <div class="status-tracker">
+            <div class="status-step active">
+                <div class="status-dot"></div>
+                <div class="status-label">Ordered</div>
+            </div>
+            <div class="status-line {% if order.order_status in ['Picked', 'Shipped', 'Delivered'] %}active{% endif %}"></div>
+            <div class="status-step {% if order.order_status in ['Picked', 'Shipped', 'Delivered'] %}active{% endif %}">
+                <div class="status-dot"></div>
+                <div class="status-label">Picked</div>
+            </div>
+            <div class="status-line {% if order.order_status in ['Shipped', 'Delivered'] %}active{% endif %}"></div>
+            <div class="status-step {% if order.order_status in ['Shipped', 'Delivered'] %}active{% endif %}">
+                <div class="status-dot"></div>
+                <div class="status-label">Shipped</div>
+            </div>
+            <div class="status-line {% if order.order_status == 'Delivered' %}active{% endif %}"></div>
+            <div class="status-step {% if order.order_status == 'Delivered' %}active{% endif %}">
+                <div class="status-dot"></div>
+                <div class="status-label">Delivered</div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+{% endfor %}

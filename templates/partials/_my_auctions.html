@@ -1,0 +1,16 @@
+{% for auction in my_auctions %}
+    <div class="auction-item">
+        <div class="auction-info">
+            <h3>{{ auction.title }}</h3>
+            <p><strong>Current Bid:</strong> ₹{{ "%.2f"|format(auction.current_price) }}</p>
+            <p><strong>Starting Price:</strong> ₹{{ "%.2f"|format(auction.starting_price) }}</p>
+            <p><strong>Ends:</strong> {{ get_time_left(auction.end_time) }}</p>
+        </div>
+        <div class="auction-actions">
+            <a href="{{ url_for('auction_detail', auction_id=auction.id) }}" class="btn btn-primary">View</a>
+            {% if auction.bid_count == 0 and get_time_left(auction.end_time) != 'Ended' %}
+                <a href="{{ url_for('edit_auction', auction_id=auction.id) }}" class="btn btn-secondary" style="margin-left: 0.5rem;">Edit</a>
+            {% endif %}
+        </div>
+    </div>
+{% endfor %}

@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero" id="home">
+    <div class="container">
+        <h1>Welcome to AuctionHub</h1>
+        <p>Discover amazing deals and bid on unique items from around the world</p>
+        <a href="#auctions" class="btn btn-primary">Start Bidding</a>
+    </div>
+</section>
+
+<!-- Featured Auctions -->
+<section class="featured-section" id="auctions">
+    <div class="container">
+        <h2 class="section-title">Featured Auctions</h2>
+        <form method="get" action="{{ url_for('index') }}" style="text-align:center; margin-bottom:2rem;">
+            <label for="category" style="font-weight:600; margin-right:0.5rem;">Filter by Category:</label>
+            <select name="category" id="category" style="padding:0.5rem 1rem; border-radius:8px; border:1px solid #ccc;">
+                <option value="">All</option>
+                <option value="Clothes" {% if request.args.get('category') == 'Clothes' %}selected{% endif %}>Clothes</option>
+                <option value="Electronics" {% if request.args.get('category') == 'Electronics' %}selected{% endif %}>Electronics</option>
+                <option value="Wooden" {% if request.args.get('category') == 'Wooden' %}selected{% endif %}>Wooden</option>
+                <option value="Watches" {% if request.args.get('category') == 'Watches' %}selected{% endif %}>Watches</option>
+                <option value="Collectibles" {% if request.args.get('category') == 'Collectibles' %}selected{% endif %}>Collectibles</option>
+                <option value="Art" {% if request.args.get('category') == 'Art' %}selected{% endif %}>Art</option>
+                <option value="Music" {% if request.args.get('category') == 'Music' %}selected{% endif %}>Music</option>
+                <option value="Fashion" {% if request.args.get('category') == 'Fashion' %}selected{% endif %}>Fashion</option>
+                <option value="Sports" {% if request.args.get('category') == 'Sports' %}selected{% endif %}>Sports</option>
+            </select>
+            <button type="submit" class="btn btn-secondary" style="margin-left:1rem;">Apply</button>
+        </form>
+        <div class="auction-grid" id="auctionGrid">
+            {% if auctions %}
+                {% for auction in auctions %}
+                <div class="auction-card" onclick="window.location.href='{{ url_for('auction_detail', auction_id=auction.id) }}'">
+                    <div class="auction-image">
+                        {% if auction.image_url and 'uploads' in auction.image_url %}
+                            <img src="{{ url_for('static', filename=auction.image_url) }}" alt="{{ auction.title }}" style="width: 100%; height: 100%; object-fit: cover;">
+                        {% elif auction.image_url %}
+                            {# This handles the emoji from sample data #}
+                            {{ auction.image_url }}
+                        {% else %}
+                            🏷️
+                        {% endif %}
+                    </div>
+                    <div class="auction-info">
+                        <div class="auction-title">{{ auction.title }}</div>
+                        <p class="auction-description">{{ auction.description }}</p>
+                        <div class="auction-stats">
+                            <div class="current-bid">₹{{ "%.2f"|format(auction.current_price) }}</div>
+                            <div class="time-left">{{ get_time_left(auction.end_time) }}</div>
+                        </div>
+                        <button class="bid-btn">View Auction</button>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="grid-column: 1/-1; text-align: center; padding: 2rem;">
+                    {% if request.args.get('category') %}
+                        <p>No auctions found for this category.</p>
+                    {% else %}
+                        <p>No auctions available at the moment. Check back soon!</p>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Help Section -->
+<section class="help-section" id="help">
+    <div class="container">
+        <h2 class="section-title">How It Works</h2>
+        <div class="help-grid">
+            <div class="help-card">
+                <div class="help-icon">📧</div>
+                <h3>Contact Details</h3>
+                <p>
+                    <strong>Email:</strong> <a href="mailto:support@auctionhub.com">support@auctionhub.com</a><br>
+                    <strong>Phone:</strong> <a href="tel:+1234567890">+1 234 567 890</a>
+                </p>
+            </div>
+            <div class="help-card">
+                <div class="help-icon">👤</div>
+                <h3>Create Account</h3>
+                <p>Sign up for free and verify your email to start bidding on auctions</p>
+            </div>
+            <div class="help-card">
+                <div class="help-icon">🔍</div>
+                <h3>Browse Auctions</h3>
+                <p>Explore thousands of items across various categories and find what you love</p>
+            </div>
+            <div class="help-card">
+                <div class="help-icon">💰</div>
+                <h3>Place Bids</h3>
+                <p>Bid on items you want and track your auctions in real-time</p>
+            </div>
+            <div class="help-card">
+                <div class="help-icon">🏆</div>
+                <h3>Win & Pay</h3>
+                <p>If you win, complete payment and receive your item with secure shipping</p>
+            </div>
+            <div class="help-card">
+                <div class="help-icon">↩️</div>
+                <h3>Refund & Cancellation</h3>
+                <p>Orders can be cancelled by an admin. If you wish to cancel an order, please contact support. Refunds are processed within 5-7 business days for cancelled orders.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

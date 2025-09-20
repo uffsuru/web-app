@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - AuctionHub{% endblock %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div class="container" style="padding-top: 2rem; padding-bottom: 2rem;">
+    <div class="dashboard-container">
+        <div class="dashboard-tabs">
+            <button class="tab-link active" data-tab="my-bids">My Bids</button>
+            <button class="tab-link" data-tab="my-auctions">My Auctions</button>
+            <button class="tab-link" data-tab="my-orders">My Orders</button>
+        </div>
+
+        <div class="tab-content" id="my-orders">
+            <h2>My Orders</h2>
+            <div class="order-list">
+                <!-- Content will be loaded via JavaScript -->
+            </div>
+            <div class="load-more-container" style="text-align: center; margin-top: 2rem;">
+                <!-- "Load More" button will be injected here by JS -->
+            </div>
+            <!-- Help Modal (moved outside the loop) -->
+            <div id="orderHelpModal" class="modal">
+                <div class="modal-content" style="max-width:400px;">
+                    <span class="close" id="closeHelpModal">&times;</span>
+                    <h2>Order Help</h2>
+                    <p>If you need help with your order, please contact our support team at <a href="mailto:support@auctionhub.com">support@auctionhub.com</a> and mention your Order ID.<br><br>
+                    <strong>Order ID:</strong> <span id="helpOrderId"></span></p>
+                    <hr>
+                    <h4>Refund & Cancellation Policy</h4>
+                    <p>Orders can be cancelled by an admin. If you wish to cancel an order, please contact support. Refunds are processed within 5-7 business days for cancelled orders.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content active" id="my-bids">
+            <h2>My Bids</h2>
+            <div class="bid-list">
+                {% if my_bids %}
+                    {% include 'partials/_my_bids.html' %}
+                {% else %}
+                    <div class="empty-state">
+                        <h3>You haven't placed any bids yet</h3>
+                        <p>Find an item you like and place your first bid!</p>
+                        <a href="{{ url_for('index', _anchor='auctions') }}" class="btn btn-primary">Find Auctions</a>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="load-more-container" style="text-align: center; margin-top: 2rem;">
+                {% if has_more_bids %}
+                    <button class="btn btn-secondary load-more-btn" data-tab="my-bids" data-next-page="2">Load More Bids</button>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="tab-content" id="my-auctions">
+            <h2>My Auctions</h2>
+            <div class="auction-list">
+                <!-- Content will be loaded via JavaScript -->
+            </div>
+            <div class="load-more-container" style="text-align: center; margin-top: 2rem;">
+                <!-- "Load More" button will be injected here by JS -->
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}
+{% endblock %}
