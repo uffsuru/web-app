@@ -7,4 +7,3 @@ python-dotenv
 gunicorn
 eventlet
 Flask-Migrate
-Flask-Migrate
