@@ -1,3 +1,10 @@
+databases:
+  - name: auctionhub-db
+    plan: free # Or your preferred plan
+    # The major version of PostgreSQL.
+    # Render will automatically use the latest minor version.
+    postgresMajorVersion: 14
+
 services:
   - type: web
     name: auctionhub-web
@@ -19,10 +26,3 @@ services:
       # Render will generate a secure, random string for this value
       - key: SECRET_KEY
         generateValue: true
-
-  - type: psql
-    name: auctionhub-db
-    plan: free # Or your preferred plan
-    # The major version of PostgreSQL.
-    # Render will automatically use the latest minor version.
-    postgresMajorVersion: 14
