@@ -347,6 +347,7 @@ def register():
                           {'name': name, 'email': email, 'password': hashed_password, 'created_at': datetime.now()})
         db.session.commit()
     except Exception as e:
+        db.session.rollback()
         print(f"Error in register route: {e}")
         return jsonify({'success': False, 'message': 'Database error during registration.'})
 
