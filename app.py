@@ -54,31 +54,29 @@ def init_db():
     with app.app_context():
         # Using db.engine.connect() ensures we use the pooled and managed connections
         with db.engine.connect() as conn:
-            conn.execute(text('''CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, name VARCHAR(255), email VARCHAR(255) UNIQUE, password TEXT, created_at TIMESTAMP, email_verified BOOLEAN DEFAULT false, is_admin BOOLEAN DEFAULT false)'''))
-            try:
-                # Add is_admin column for existing databases
-                conn.execute(text("ALTER TABLE users ADD COLUMN is_admin BOOLEAN DEFAULT false"))
-            except Exception as e: # Catch SQLAlchemy's specific exception if needed
-                if 'column "is_admin" of relation "users" already exists' not in str(e):
-                    raise
-            conn.execute(text('''CREATE TABLE IF NOT EXISTS auctions (id SERIAL PRIMARY KEY, title VARCHAR(255), description TEXT, starting_price DECIMAL(10, 2), current_price DECIMAL(10, 2), end_time TIMESTAMP, seller_id INT, category VARCHAR(255), image_url TEXT, created_at TIMESTAMP, history_link TEXT)'''))
-            conn.execute(text('''CREATE TABLE IF NOT EXISTS bids (id SERIAL PRIMARY KEY, auction_id INT, user_id INT, amount DECIMAL(10, 2), bid_time TIMESTAMP)'''))
-            conn.execute(text('''CREATE TABLE IF NOT EXISTS orders (id SERIAL PRIMARY KEY, auction_id INT, user_id INT, address TEXT, payment_status VARCHAR(50), order_status VARCHAR(50) DEFAULT 'Ordered', created_at TIMESTAMP)'''))
-            conn.execute(text('''CREATE TABLE IF NOT EXISTS notifications (id SERIAL PRIMARY KEY, user_id INT, message TEXT, is_read BOOLEAN DEFAULT false, created_at TIMESTAMP, link TEXT, FOREIGN KEY(user_id) REFERENCES users(id))'''))
+            with conn.begin(): # Use a transaction block for creating tables and indexes
+                conn.execute(text('''CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, name VARCHAR(255), email VARCHAR(255) UNIQUE, password TEXT, created_at TIMESTAMP, email_verified BOOLEAN DEFAULT false, is_admin BOOLEAN DEFAULT false)'''))
+                conn.execute(text('''CREATE TABLE IF NOT EXISTS auctions (id SERIAL PRIMARY KEY, title VARCHAR(255), description TEXT, starting_price DECIMAL(10, 2), current_price DECIMAL(10, 2), end_time TIMESTAMP, seller_id INT, category VARCHAR(255), image_url TEXT, created_at TIMESTAMP, history_link TEXT)'''))
+                conn.execute(text('''CREATE TABLE IF NOT EXISTS bids (id SERIAL PRIMARY KEY, auction_id INT, user_id INT, amount DECIMAL(10, 2), bid_time TIMESTAMP)'''))
+                conn.execute(text('''CREATE TABLE IF NOT EXISTS orders (id SERIAL PRIMARY KEY, auction_id INT, user_id INT, address TEXT, payment_status VARCHAR(50), order_status VARCHAR(50) DEFAULT 'Ordered', created_at TIMESTAMP)'''))
+                conn.execute(text('''CREATE TABLE IF NOT EXISTS notifications (id SERIAL PRIMARY KEY, user_id INT, message TEXT, is_read BOOLEAN DEFAULT false, created_at TIMESTAMP, link TEXT, FOREIGN KEY(user_id) REFERENCES users(id))'''))
 
-            # --- Add Indexes for Performance ---
-            def execute_alter(command):
-                # PostgreSQL uses a different syntax for creating indexes if they don't exist.
-                conn.execute(text(command))
+                # --- Add Indexes for Performance ---
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_auctions_seller_id ON auctions (seller_id)"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_auctions_end_time ON auctions (end_time)"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_auctions_category ON auctions (category)"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_bids_auction_id ON bids (auction_id)"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_bids_user_id ON bids (user_id)"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders (user_id)"))
 
-            execute_alter("CREATE INDEX IF NOT EXISTS idx_auctions_seller_id ON auctions (seller_id)")
-            execute_alter("CREATE INDEX IF NOT EXISTS idx_auctions_end_time ON auctions (end_time)")
-            execute_alter("CREATE INDEX IF NOT EXISTS idx_auctions_category ON auctions (category)")
-            execute_alter("CREATE INDEX IF NOT EXISTS idx_bids_auction_id ON bids (auction_id)")
-            execute_alter("CREATE INDEX IF NOT EXISTS idx_bids_user_id ON bids (user_id)")
-            execute_alter("CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders (user_id)")
-            # --- End of Index Addition ---
-            conn.commit()
+            # The ALTER TABLE statement is a migration step for older databases.
+            # Running it in a separate transaction is safer.
+            with conn.begin():
+                try:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN is_admin BOOLEAN DEFAULT false"))
+                except Exception as e:
+                    if 'column "is_admin" of relation "users" already exists' not in str(e):
+                        raise
 
 # --- Notification Helper ---
 def create_notification(user_id, message, link):
