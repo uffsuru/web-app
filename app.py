@@ -11,6 +11,7 @@ from werkzeug.utils import secure_filename
 import random
 import os
 from dotenv import load_dotenv
+from sqlalchemy.exc import SQLAlchemyError
 
 app = Flask(__name__)
 load_dotenv() # Load environment variables from .env file
