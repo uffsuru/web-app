@@ -343,7 +343,7 @@ def register():
 
         # Create user (email_verified=0 by default)
         hashed_password = generate_password_hash(password)
-        db.session.execute(text('INSERT INTO users (name, email, password, created_at, email_verified) VALUES (:name, :email, :password, :created_at, 0)'),
+        db.session.execute(text('INSERT INTO users (name, email, password, created_at, email_verified) VALUES (:name, :email, :password, :created_at, false)'),
                           {'name': name, 'email': email, 'password': hashed_password, 'created_at': datetime.now()})
         db.session.commit()
     except Exception as e:
