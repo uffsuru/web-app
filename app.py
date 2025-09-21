@@ -13,7 +13,9 @@ from werkzeug.utils import secure_filename
 import random
 import os
 from dotenv import load_dotenv
+from sqlalchemy.pool import NullPool
 from sqlalchemy.exc import SQLAlchemyError
+
 
 app = Flask(__name__)
 load_dotenv() # Load environment variables from .env file
@@ -48,11 +50,9 @@ else:
 
 # These settings are good for production environments to prevent stale connections.
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-    "pool_pre_ping": True,        # Detect dead connections
-    "pool_recycle": 280,          # Recycle connections
-    "pool_size": 5,               # Adjust pool size
-    "max_overflow": 10,           # Allow temporary burst
+    "poolclass": NullPool
 }
+
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
