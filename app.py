@@ -45,10 +45,13 @@ else:
     app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}'
 
 # These settings are good for production environments to prevent stale connections.
-app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-    'pool_recycle': 299,  # Recycles connections after 299 seconds, preventing "MySQL has gone away" errors.
-    'pool_pre_ping': True # Checks connection health before use.
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "pool_pre_ping": True,        # Detect dead connections
+    "pool_recycle": 280,          # Recycle connections
+    "pool_size": 5,               # Adjust pool size
+    "max_overflow": 10,           # Allow temporary burst
 }
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -755,3 +758,8 @@ if __name__ == '__main__':
     print("➡️  Run `flask db upgrade` to set up/update the database.")
     print("➡️  Open your browser and go to: http://localhost:5000")
     socketio.run(app, host='0.0.0.0', port=5000, debug=True)
+
+@app.teardown_appcontext
+def shutdown_session(exception=None):
+    db.session.remove()
+
