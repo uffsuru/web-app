@@ -16,7 +16,6 @@ from dotenv import load_dotenv
 from sqlalchemy.pool import NullPool
 from sqlalchemy.exc import SQLAlchemyError
 from flask import send_from_directory
-from models import db, Auction  # adjust import to your project
 from models import db, User, Auction, Bid, Order, Notification
 
 
