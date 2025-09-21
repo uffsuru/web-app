@@ -17,6 +17,7 @@ from sqlalchemy.pool import NullPool
 from sqlalchemy.exc import SQLAlchemyError
 from flask import send_from_directory
 from models import db, Auction  # adjust import to your project
+from models import db, User, Auction, Bid, Order, Notification
 
 
 
@@ -77,7 +78,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 # Import models after db is defined to avoid circular imports
-from models import db, User, Auction, Bid, Order, Notification
+
 db.init_app(app)
 
 # ✅ Setup migrations
