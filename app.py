@@ -24,6 +24,19 @@ app = Flask(__name__)
 load_dotenv() # Load environment variables from .env file
 app.secret_key = os.getenv('SECRET_KEY', 'a-default-dev-secret-key-that-is-not-secure')
 
+# Upload folder settings (top-level, not inside a function!)
+UPLOAD_FOLDER = os.path.join(os.getcwd(), "uploads")
+ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "gif", "pdf", "webp", "bmp", "tiff", "svg"}
+
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+
+
 # For production servers like Render using eventlet, we don't need to force 'threading'.
 # For platforms like PythonAnywhere, async_mode='threading' is required.
 # Let SocketIO auto-detect the best async mode.
@@ -479,18 +492,6 @@ def place_bid():
         print(f"Error in place_bid route: {e}")
         db.session.rollback()
         return jsonify({'success': False, 'message': 'An error occurred while placing the bid.'})
-
-@app.route('/auction/<int:auction_id>/edit', methods=['GET', 'POST'])
-
-# configure upload folder (inside your project)
-UPLOAD_FOLDER = os.path.join(os.getcwd(), "uploads")
-ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "gif", "pdf", "webp", "bmp", "tiff", "svg"}
-
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
-
-def allowed_file(filename):
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route("/create_auction", methods=["GET", "POST"])
 def create_auction():
