@@ -47,7 +47,7 @@ else:
     DB_HOST = os.getenv('DB_HOST', 'dpg-d373q3er433s73ecr2t0-a')
     DB_NAME = os.getenv('DB_NAME', 'auctionhub_db_8dkq')
 
-app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql+psycopg2://{auctionhub_db_8dkq_user}:{vJThkPMseiaFdRfW5XqZlgpTAaupEJOv}@{dpg-d373q3er433s73ecr2t0-a}/{auctionhub_db_8dkq}'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL")
 
 
 # These settings are good for production environments to prevent stale connections.
