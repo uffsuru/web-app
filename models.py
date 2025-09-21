@@ -1,7 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
-# Define db here
 db = SQLAlchemy()
 
 class User(db.Model):
@@ -13,6 +12,7 @@ class User(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     email_verified = db.Column(db.Boolean, default=False)
     is_admin = db.Column(db.Boolean, default=False)
+
 
 class Auction(db.Model):
     __tablename__ = 'auctions'
