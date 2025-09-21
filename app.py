@@ -847,7 +847,15 @@ if __name__ == '__main__':
     print("✅ Make sure your PostgreSQL server is running and configured in .env")
     print("➡️  Run `flask db upgrade` to set up/update the database.")
     print("➡️  Open your browser and go to: http://localhost:5000")
+
+    # Ensure all DB operations happen inside app context
+    with app.app_context():
+        # Example: create tables if not already managed by migrations
+        # db.create_all()
+        pass
+
     socketio.run(app, host='0.0.0.0', port=5000, debug=True)
+
 
 @app.teardown_appcontext
 def shutdown_session(exception=None):
