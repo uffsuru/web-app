@@ -74,8 +74,6 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-db = SQLAlchemy(app)
-
 # Import models after db is defined to avoid circular imports
 
 db.init_app(app)
