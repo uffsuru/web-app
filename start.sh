@@ -11,4 +11,4 @@ flask db upgrade
 python seed.py
 
 echo "Starting Gunicorn server..."
-gunicorn --workers 3 --bind 0.0.0.0:$PORT --access-logfile - --error-logfile - --log-level info "wsgi:application"
+gunicorn --worker-class eventlet -w 1 --bind 0.0.0.0:$PORT "wsgi:application"
