@@ -557,6 +557,10 @@ def create_auction():
     # ✅ If GET → show form
     return render_template("create_auction.html")
 
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(UPLOAD_FOLDER, filename)
+
 def edit_auction(auction_id):
     if 'user_id' not in session:
         return redirect(url_for('index'))
