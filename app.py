@@ -818,8 +818,12 @@ def notifications_summary():
     if 'user_id' not in session:
         return jsonify({'success': False, 'error': 'Not logged in'}), 401
 
-    unread_count_result = db.session.execute(text("SELECT COUNT(*) as count FROM notifications WHERE user_id = :user_id AND is_read = 0"), {'user_id': session['user_id']})
-    unread_count = unread_count_result.scalar()
+    unread_count_result = db.session.execute(
+      text("SELECT COUNT(*) as count FROM notifications WHERE user_id = :user_id AND is_read = false"),
+      {"user_id": session["user_id"]}
+      ).fetchone()
+    unread_count = unread_count_result.count
+
 
     notifications_result = db.session.execute(text("SELECT * FROM notifications WHERE user_id = :user_id ORDER BY created_at DESC LIMIT 10"), {'user_id': session['user_id']})
     notifications = notifications_result.mappings().all()
