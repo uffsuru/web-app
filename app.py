@@ -78,6 +78,9 @@ db = SQLAlchemy(app)
 
 # Import models after db is defined to avoid circular imports
 from models import db, User, Auction, Bid, Order, Notification
+db.init_app(app)
+
+# ✅ Setup migrations
 
 migrate = Migrate(app, db)
 from sqlalchemy import text
