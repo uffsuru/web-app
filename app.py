@@ -77,10 +77,11 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 # Import models after db is defined to avoid circular imports
-from models import User, Auction, Bid, Order, Notification
+from models import db, User, Auction, Bid, Order, Notification
 
 migrate = Migrate(app, db)
 from sqlalchemy import text
+
 
 # --- Notification Helper ---
 def create_notification(user_id, message, link):
