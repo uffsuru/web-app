@@ -495,8 +495,8 @@ def place_bid():
         db.session.rollback()
         return jsonify({'success': False, 'message': 'An error occurred while placing the bid.'})
 
-@app.route("/create-auction", methods=["GET", "POST"])
-def create-auction():
+@app.route("/create_auction", methods=["GET", "POST"])
+def create_auction():
     if request.method == "POST":
         try:
             # ✅ Get form fields
