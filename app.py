@@ -46,12 +46,9 @@ else:
     DB_PASSWORD = os.getenv('DB_PASSWORD', 'vJThkPMseiaFdRfW5XqZlgpTAaupEJOv')
     DB_HOST = os.getenv('DB_HOST', 'dpg-d373q3er433s73ecr2t0-a')
     DB_NAME = os.getenv('DB_NAME', 'auctionhub_db_8dkq_user')
-    app.config['SQLALCHEMY_DATABASE_URI'] = (
-    "postgresql+psycopg2://auctionhub_db_8dkq:"
-    "vJThkPMseiaFdRfW5XqZlgpTAaupEJOv@"
-    "dpg-d373q3er433s73ecr2t0-a:5432/"
-    "auctionhub_db_8dkq_user"
-)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql+psycopg2://{auctionhub_db_8dkq}:{vJThkPMseiaFdRfW5XqZlgpTAaupEJOv}@{dpg-d373q3er433s73ecr2t0-a}/{auctionhub_db_8dkq_user}'
+
 
 # These settings are good for production environments to prevent stale connections.
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
