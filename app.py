@@ -42,12 +42,12 @@ if database_url and database_url.startswith("postgres://"):
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 else:
     # Fallback to local .env configuration for development
-    DB_USER = os.getenv('DB_USER', 'auctionhub_db_8dkq')
+    DB_USER = os.getenv('DB_USER', 'auctionhub_db_8dkq_user')
     DB_PASSWORD = os.getenv('DB_PASSWORD', 'vJThkPMseiaFdRfW5XqZlgpTAaupEJOv')
     DB_HOST = os.getenv('DB_HOST', 'dpg-d373q3er433s73ecr2t0-a')
-    DB_NAME = os.getenv('DB_NAME', 'auctionhub_db_8dkq_user')
+    DB_NAME = os.getenv('DB_NAME', 'auctionhub_db_8dkq')
 
-app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql+psycopg2://{auctionhub_db_8dkq}:{vJThkPMseiaFdRfW5XqZlgpTAaupEJOv}@{dpg-d373q3er433s73ecr2t0-a}/{auctionhub_db_8dkq_user}'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql+psycopg2://{auctionhub_db_8dkq_user}:{vJThkPMseiaFdRfW5XqZlgpTAaupEJOv}@{dpg-d373q3er433s73ecr2t0-a}/{auctionhub_db_8dkq}'
 
 
 # These settings are good for production environments to prevent stale connections.
