@@ -495,8 +495,8 @@ def place_bid():
         db.session.rollback()
         return jsonify({'success': False, 'message': 'An error occurred while placing the bid.'})
 
-@app.route("/create_auction", methods=["GET", "POST"])
-def create_auction():
+@app.route("/create-auction", methods=["GET", "POST"])
+def create-auction():
     if request.method == "POST":
         try:
             # ✅ Get form fields
@@ -558,7 +558,7 @@ def create_auction():
             return render_template("create_auction.html")
 
     # ✅ If GET → show form
-    return render_template("create_auction.html")
+    return render_template("create-auction.html")
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
