@@ -1,6 +1,6 @@
 import eventlet
 eventlet.monkey_patch()
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for , flash, current_app
 from flask_socketio import SocketIO, join_room
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -15,6 +15,9 @@ import os
 from dotenv import load_dotenv
 from sqlalchemy.pool import NullPool
 from sqlalchemy.exc import SQLAlchemyError
+from flask import send_from_directory
+from models import db, Auction  # adjust import to your project
+
 
 
 app = Flask(__name__)
@@ -478,6 +481,82 @@ def place_bid():
         return jsonify({'success': False, 'message': 'An error occurred while placing the bid.'})
 
 @app.route('/auction/<int:auction_id>/edit', methods=['GET', 'POST'])
+
+# configure upload folder (inside your project)
+UPLOAD_FOLDER = os.path.join(os.getcwd(), "uploads")
+ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "gif", "pdf", "webp", "bmp", "tiff", "svg"}
+
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route("/create_auction", methods=["GET", "POST"])
+def create_auction():
+    if request.method == "POST":
+        try:
+            # ✅ Get form fields
+            title = request.form.get("title")
+            description = request.form.get("description")
+            starting_price = request.form.get("starting_price")
+            end_time = request.form.get("end_time")
+            category = request.form.get("category")
+            history_link = request.form.get("history_link") or None
+
+            # ✅ Validation
+            if not title or not description or not starting_price or not end_time or not category:
+                flash("All required fields must be filled.", "danger")
+                return render_template("create_auction.html")
+
+            try:
+                starting_price = float(starting_price)
+            except ValueError:
+                flash("Starting price must be a number.", "danger")
+                return render_template("create_auction.html")
+
+            try:
+                end_time = datetime.strptime(end_time, "%Y-%m-%dT%H:%M")
+            except ValueError:
+                flash("Invalid end time format.", "danger")
+                return render_template("create_auction.html")
+
+            # ✅ Handle file upload
+            file_url = None
+            if "image_file" in request.files:
+                file = request.files["image_file"]
+                if file and allowed_file(file.filename):
+                    filename = secure_filename(file.filename)
+                    filepath = os.path.join(UPLOAD_FOLDER, filename)
+                    file.save(filepath)
+                    file_url = f"/uploads/{filename}"  # you can serve it with a static route
+
+            # ✅ Create Auction object
+            new_auction = Auction(
+                title=title,
+                description=description,
+                starting_price=starting_price,
+                end_time=end_time,
+                category=category,
+                history_link=history_link,
+                image_url=file_url,
+                created_at=datetime.utcnow()
+            )
+
+            db.session.add(new_auction)
+            db.session.commit()
+
+            flash("Auction created successfully!", "success")
+            return redirect(url_for("index"))
+
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error creating auction: {str(e)}", "danger")
+            return render_template("create_auction.html")
+
+    # ✅ If GET → show form
+    return render_template("create_auction.html")
+
 def edit_auction(auction_id):
     if 'user_id' not in session:
         return redirect(url_for('index'))
